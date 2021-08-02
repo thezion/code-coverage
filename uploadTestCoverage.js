@@ -1,13 +1,17 @@
+/*
+https://docs.github.com/en/rest/reference/repos#statuses
+*/
+
 const fs = require("fs");
 const https = require("https");
 
 const report = JSON.parse(fs.readFileSync("./coverage/coverage-summary.json"));
 
-const description = `lines:${report.total.lines.pct}% statements:${report.total.statements.pct}% functions:${report.total.functions.pct}% branches:${report.total.branches.pct}%`;
+const description = `Lines:${report.total.lines.pct}% Statements:${report.total.statements.pct}% Functions:${report.total.functions.pct}% Branches:${report.total.branches.pct}%`;
 
 const data = new TextEncoder().encode(
   JSON.stringify({
-    state: "success",
+    state: report.total.lines.pct < 80 ? "error" : "success",
     context: "Test Coverage",
     description: description,
   })
@@ -27,9 +31,6 @@ const options = {
       new Buffer(process.env.GITHUB_USER_AND_TOKEN).toString("base64"),
   },
 };
-
-console.log(`Requesting ${options.path}`);
-console.log(`Psw = ${process.env.GITHUB_USER_AND_TOKEN.substr(0, 20)}`);
 
 const req = https.request(options, (res) => {
   console.log(`statusCode: ${res.statusCode}`);
